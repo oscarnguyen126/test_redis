@@ -1,0 +1,64 @@
+pipeline {
+    agent {
+        docker {
+            image 'python:3.10'
+            args '-u root'
+        }
+    }
+
+    environment {
+        DB_NAME = 'products'
+        DB_USER = 'postgres'
+        DB_PASS = 'admin@123'
+        DB_HOST = 'localhost'
+        DB_PORT = '5432'
+        VENV_DIR = 'venv'
+    }
+
+    stages {
+        stage('Start PostgreSQL') {
+            steps {
+                sh '''
+                    docker run -d \
+                        --name test-postgres \
+                        -e POSTGRES_DB=$DB_NAME \
+                        -e POSTGRES_USER=$DB_USER \
+                        -e POSTGRES_PASSWORD=$DB_PASS \
+                        -p $DB_PORT:5432 \
+                        postgres:13
+
+                    # Wait for DB to be ready
+                    sleep 10
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    python -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    . $VENV_DIR/bin/activate
+                    python manage.py migrate
+                    python manage.py test
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            sh 'docker rm -f test-postgres || true'
+        }
+    }
+}

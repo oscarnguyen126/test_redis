@@ -73,15 +73,16 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+import os
 
 DATABASES = {
     'default': {
-    'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    'NAME': 'products',
-    'USER': 'postgres',
-    'PASSWORD': 'admin@123',
-    'HOST': 'localhost',
-    'PORT': '5432',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.getenv('DB_NAME', 'products'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASS', 'admin@123'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
